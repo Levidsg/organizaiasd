@@ -40,7 +40,7 @@ const MONTHS = [
   { value: "all", label: "Todos os meses" },
   { value: "1", label: "Janeiro" },
   { value: "2", label: "Fevereiro" },
-  { value: "3", label: "Marco" },
+  { value: "3", label: "Março" },
   { value: "4", label: "Abril" },
   { value: "5", label: "Maio" },
   { value: "6", label: "Junho" },
@@ -55,7 +55,7 @@ const MONTHS = [
 const MONTH_NAMES: Record<number, string> = {
   1: "Janeiro",
   2: "Fevereiro",
-  3: "Marco",
+  3: "Março",
   4: "Abril",
   5: "Maio",
   6: "Junho",
@@ -136,7 +136,7 @@ export function AgendaView() {
         .join(", ");
       const activities = sameDateEvents.map((ev) => ev.activity).join("; ");
       setConflictWarning(
-        `Ja existe(m) evento(s) nesta data: "${activities}" (${deptNames}). Deseja agendar mesmo assim?`,
+        `Já existe(m) evento(s) nesta data: "${activities}" (${deptNames}). Deseja agendar mesmo assim?`,
       );
     } else {
       setConflictWarning(null);
@@ -232,7 +232,7 @@ export function AgendaView() {
             Agenda da Igreja
           </h1>
           <p className="text-sm text-muted-foreground">
-            Eventos e atividades organizados por mes e departamento
+            Eventos e atividades organizados por mês e departamento
           </p>
         </div>
 
@@ -329,14 +329,14 @@ export function AgendaView() {
                         </Alert>
                       )}
                       <div className="flex flex-col gap-2">
-                        <Label>Horario</Label>
+                        <Label>Horário</Label>
                         <Input
                           type="time"
                           value={form.event_time}
                           onChange={(e) =>
                             setForm({ ...form, event_time: e.target.value })
                           }
-                          placeholder="Horario (opcional)"
+                          placeholder="Horário (opcional)"
                         />
                       </div>
                       <div className="flex flex-col gap-2">
@@ -346,7 +346,7 @@ export function AgendaView() {
                           onChange={(e) =>
                             setForm({ ...form, activity: e.target.value })
                           }
-                          placeholder="Descricao do evento"
+                          placeholder="Descrição do evento"
                           required
                         />
                       </div>
@@ -452,13 +452,13 @@ export function AgendaView() {
                         <TableHeader>
                           <TableRow className="bg-muted/50">
                             <TableHead className="w-[90px] text-foreground font-semibold">
-                              Mes
+                              Mês
                             </TableHead>
                             <TableHead className="w-[100px] text-foreground font-semibold">
                               Data
                             </TableHead>
                             <TableHead className="w-[80px] text-foreground font-semibold">
-                              Horario
+                              Horário
                             </TableHead>
                             <TableHead className="text-foreground font-semibold">
                               Evento / Atividade
@@ -467,7 +467,7 @@ export function AgendaView() {
                               Departamento
                             </TableHead>
                             <TableHead className="w-[100px] text-foreground font-semibold text-right">
-                              Acoes
+                              Ações
                             </TableHead>
                           </TableRow>
                         </TableHeader>

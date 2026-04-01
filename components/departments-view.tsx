@@ -87,7 +87,7 @@ export function DepartmentsView() {
             Departamentos
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gerencie os departamentos e ministerios da igreja
+            Gerencie os departamentos e ministérios da igreja
           </p>
         </div>
 
@@ -122,11 +122,11 @@ export function DepartmentsView() {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label>Descricao</Label>
+                  <Label>Descrição</Label>
                   <Textarea
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    placeholder="Descricao (opcional)"
+                    placeholder="Descrição (opcional)"
                     rows={3}
                   />
                 </div>
@@ -166,7 +166,7 @@ export function DepartmentsView() {
             <CardContent className="py-12 text-center text-muted-foreground">
               <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p>Nenhum departamento cadastrado.</p>
-              <p className="text-xs mt-1">Clique em &quot;Novo Departamento&quot; para comecar.</p>
+              <p className="text-xs mt-1">Clique em &quot;Novo Departamento&quot; para começar.</p>
             </CardContent>
           </Card>
         ) : (
@@ -212,7 +212,7 @@ export function DepartmentsView() {
                     </p>
                   )}
                   <p className="text-sm text-muted-foreground line-clamp-2">
-                    {dept.description || "Sem descricao"}
+                    {dept.description || "Sem descrição"}
                   </p>
                 </CardContent>
               </Card>

@@ -40,7 +40,7 @@ interface ProgramListItem {
 type TabType = "sabado" | "domingo" | "quarta" | "especiais"
 
 const TAB_LABELS: Record<TabType, string> = {
-  sabado: "Sabado",
+  sabado: "Sábado",
   domingo: "Domingo",
   quarta: "Quarta",
   especiais: "Especiais",
@@ -149,7 +149,7 @@ function SabadoTab() {
       )
       const ok = await saveProgram({ items: updatedItems })
       setSavingField("")
-      if (ok) toast.success("Responsavel salvo!")
+      if (ok) toast.success("Responsável salvo!")
     },
     [selectedProgram, saveProgram],
   )
@@ -170,7 +170,7 @@ function SabadoTab() {
 
   async function handleClearAll() {
     if (!selectedProgram) return
-    if (!window.confirm("Limpar todos os campos de responsaveis?")) return
+    if (!window.confirm("Limpar todos os campos de responsáveis?")) return
     setClearing(true)
     const clearedItems = selectedProgram.program_items.map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
@@ -209,7 +209,7 @@ function SabadoTab() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs md:text-sm text-muted-foreground">Toque nos campos para editar responsaveis, dirigente e data</p>
+        <p className="text-xs md:text-sm text-muted-foreground">Toque nos campos para editar responsáveis, dirigente e data</p>
         <div className="flex gap-2 self-start sm:self-auto">
           <ClearButton clearing={clearing} onClick={handleClearAll} />
           <ExportButton exporting={exporting} onClick={handleExportPNG} />
@@ -257,10 +257,10 @@ function SabadoTab() {
               </tr>
             ))}
             <tr>
-              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Horario</th>
+              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Horário</th>
               <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Tempo</th>
               <th className="px-2 md:px-3 py-2 text-center text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Escola Sabatina</th>
-              <th className="px-2 md:px-3 py-2 text-center text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Responsavel</th>
+              <th className="px-2 md:px-3 py-2 text-center text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Responsável</th>
             </tr>
             {escolaItems.map((item, index) => (
               <tr key={item.id || `escola-${index}`} className="border-b border-[#b8ccaa]" style={{ backgroundColor: index % 2 === 0 ? "#d6e4c8" : "#e4eeda" }}>
@@ -363,7 +363,7 @@ function DomingoTab() {
 
   async function handleClearAll() {
     if (!selectedProgram) return
-    if (!window.confirm("Limpar todos os campos de responsaveis? (horario, tempo e atividade NAO serao afetados)")) return
+    if (!window.confirm("Limpar todos os campos de responsáveis? (horário, tempo e atividade NÃO serão afetados)")) return
     setClearing(true)
     const clearedItems = selectedProgram.program_items.map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
@@ -393,7 +393,7 @@ function DomingoTab() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs md:text-sm text-muted-foreground">Todos os campos sao editaveis. Limpar afeta somente responsaveis.</p>
+        <p className="text-xs md:text-sm text-muted-foreground">Todos os campos são editáveis. Limpar afeta somente responsáveis.</p>
         <div className="flex gap-2 self-start sm:self-auto">
           <ClearButton clearing={clearing} onClick={handleClearAll} />
           <ExportButton exporting={exporting} onClick={handleExportPNG} />
@@ -433,7 +433,7 @@ function DomingoTab() {
             {items.map((item, index) => (
               <tr key={item.id || `dom-${index}`} className="border-b border-[#b8ccdd]" style={{ backgroundColor: index % 2 === 0 ? "#dce8f4" : "#e8f0f8" }}>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horario" />
+                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
                   <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" />
@@ -442,7 +442,7 @@ function DomingoTab() {
                   <EditableCell value={item.activity} saving={savingField === `${index}-activity`} onSave={(v) => handleCellSave(index, "activity", v)} placeholder="Atividade" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.responsible} saving={savingField === `${index}-responsible`} onSave={(v) => handleCellSave(index, "responsible", v)} placeholder="Responsavel" />
+                  <EditableCell value={item.responsible} saving={savingField === `${index}-responsible`} onSave={(v) => handleCellSave(index, "responsible", v)} placeholder="Responsável" />
                 </td>
               </tr>
             ))}
@@ -539,7 +539,7 @@ function QuartaTab() {
 
   async function handleClearAll() {
     if (!program) return
-    if (!window.confirm("Limpar todos os campos de responsaveis? (horario, tempo e atividade NAO serao afetados)")) return
+    if (!window.confirm("Limpar todos os campos de responsáveis? (horário, tempo e atividade NÃO serão afetados)")) return
     setClearing(true)
     const clearedItems = (program.program_items || []).map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
@@ -582,7 +582,7 @@ function QuartaTab() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs md:text-sm text-muted-foreground">Todos os campos sao editaveis. Limpar afeta somente responsaveis.</p>
+        <p className="text-xs md:text-sm text-muted-foreground">Todos os campos são editáveis. Limpar afeta somente responsáveis.</p>
         <div className="flex gap-2 self-start sm:self-auto">
           <ClearButton clearing={clearing} onClick={handleClearAll} />
           <ExportButton exporting={exporting} onClick={handleExportPNG} />
@@ -607,10 +607,10 @@ function QuartaTab() {
               </th>
             </tr>
             <tr>
-              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Horario</th>
+              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Horário</th>
               <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Tempo</th>
               <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Atividade</th>
-              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[280px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Responsavel</th>
+              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[280px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Responsável</th>
               <th className="w-[50px]" style={{ backgroundColor: quartaColorLight }}></th>
             </tr>
           </thead>
@@ -618,7 +618,7 @@ function QuartaTab() {
             {items.map((item, index) => (
               <tr key={item.id || `qua-${index}`} className="border-b border-[#a8ccb8]" style={{ backgroundColor: index % 2 === 0 ? "#d4e8dc" : "#e2f0e8" }}>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horario" />
+                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
                   <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" />
@@ -627,7 +627,7 @@ function QuartaTab() {
                   <EditableCell value={item.activity} saving={savingField === `${index}-activity`} onSave={(v) => handleCellSave(index, "activity", v)} placeholder="Atividade" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.responsible} saving={savingField === `${index}-responsible`} onSave={(v) => handleCellSave(index, "responsible", v)} placeholder="Responsavel" />
+                  <EditableCell value={item.responsible} saving={savingField === `${index}-responsible`} onSave={(v) => handleCellSave(index, "responsible", v)} placeholder="Responsável" />
                 </td>
                 <td className="px-1 py-1">
                   <div className="flex flex-col items-center gap-0.5">
@@ -752,7 +752,7 @@ function EspeciaisTab() {
 
   async function handleClearAll() {
     if (!selectedProgram) return
-    if (!window.confirm("Limpar todos os campos de responsaveis?")) return
+    if (!window.confirm("Limpar todos os campos de responsáveis?")) return
     setClearing(true)
     const clearedItems = (selectedProgram.program_items || []).map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
@@ -912,10 +912,10 @@ function EspeciaisTab() {
                   </th>
                 </tr>
                 <tr>
-                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Horario</th>
+                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Horário</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Tempo</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Atividade</th>
-                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[200px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Responsavel</th>
+                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[200px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Responsável</th>
                   <th className="w-[40px]" style={{ backgroundColor: specialColorLight }}></th>
                 </tr>
               </thead>
@@ -932,7 +932,7 @@ function EspeciaisTab() {
                       <input type="text" value={item.activity} onChange={(e) => handleNewItemChange(idx, "activity", e.target.value)} placeholder="Atividade" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
                     </td>
                     <td className="px-1 md:px-2 py-1">
-                      <input type="text" value={item.responsible} onChange={(e) => handleNewItemChange(idx, "responsible", e.target.value)} placeholder="Responsavel" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
+                      <input type="text" value={item.responsible} onChange={(e) => handleNewItemChange(idx, "responsible", e.target.value)} placeholder="Responsável" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
                     </td>
                     <td className="px-1 py-1 text-center">
                       {newItems.length > 1 && (
@@ -971,7 +971,7 @@ function EspeciaisTab() {
       {selectedProgram && !creating && (
         <>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs md:text-sm text-muted-foreground">Todos os campos sao editaveis. Use as setas para reordenar.</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Todos os campos são editáveis. Use as setas para reordenar.</p>
             <div className="flex gap-2 self-start sm:self-auto">
               <ClearButton clearing={clearing} onClick={handleClearAll} />
               <Button onClick={handleDeleteProgram} size="sm" variant="outline" className="gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive bg-transparent">
@@ -1021,10 +1021,10 @@ function EspeciaisTab() {
                   </th>
                 </tr>
                 <tr>
-                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Horario</th>
+                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Horário</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Tempo</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Atividade</th>
-                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[200px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Responsavel</th>
+                  <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[200px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Responsável</th>
                   <th className="w-[50px]" style={{ backgroundColor: specialColorLight }}></th>
                   <th className="w-[40px]" style={{ backgroundColor: specialColorLight }}></th>
                 </tr>
@@ -1033,7 +1033,7 @@ function EspeciaisTab() {
                 {(selectedProgram.program_items || []).map((item, index) => (
                   <tr key={item.id || `esp-${index}`} className="border-b border-[#c4b8d4]" style={{ backgroundColor: index % 2 === 0 ? "#e8dff0" : "#f0eaf6" }}>
                     <td className="px-1 md:px-2 py-1">
-                      <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horario" />
+                      <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" />
                     </td>
                     <td className="px-1 md:px-2 py-1">
                       <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" />
@@ -1042,7 +1042,7 @@ function EspeciaisTab() {
                       <EditableCell value={item.activity} saving={savingField === `${index}-activity`} onSave={(v) => handleCellSave(index, "activity", v)} placeholder="Atividade" />
                     </td>
                     <td className="px-1 md:px-2 py-1">
-                      <EditableCell value={item.responsible} saving={savingField === `${index}-responsible`} onSave={(v) => handleCellSave(index, "responsible", v)} placeholder="Responsavel" />
+                      <EditableCell value={item.responsible} saving={savingField === `${index}-responsible`} onSave={(v) => handleCellSave(index, "responsible", v)} placeholder="Responsável" />
                     </td>
                     <td className="px-1 py-1">
                       <div className="flex flex-col items-center gap-0.5">
@@ -1133,10 +1133,10 @@ function ProgramSelector({ programs, selectedId, onSelect }: { programs: Program
 function ColumnHeaders({ color }: { color: string }) {
   return (
     <tr>
-      <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: color, color: "#ffffff" }}>Horario</th>
+      <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: color, color: "#ffffff" }}>Horário</th>
       <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: color, color: "#ffffff" }}>Tempo</th>
       <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: color, color: "#ffffff" }}>Atividade</th>
-      <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[300px]" style={{ backgroundColor: color, color: "#ffffff" }}>Responsavel</th>
+      <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[300px]" style={{ backgroundColor: color, color: "#ffffff" }}>Responsável</th>
     </tr>
   )
 }
