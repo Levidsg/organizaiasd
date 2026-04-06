@@ -10,6 +10,33 @@ import { toast } from "sonner"
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
+function formatTimeInput(raw: string): string {
+  if (!raw) return ""
+  const digits = raw.replace(/\D/g, "").slice(0, 4)
+  if (digits.length <= 2) return digits
+  return digits.slice(0, 2) + ":" + digits.slice(2)
+}
+
+function formatDurationInput(raw: string): string {
+  if (!raw) return ""
+  const digits = raw.replace(/\D/g, "")
+  if (!digits) return ""
+  return digits + " min"
+}
+
+function calcNextTime(time: string, duration: string): string {
+  const timeMatch = time.match(/^(\d{1,2})[h:](\d{2})$/)
+  if (!timeMatch) return ""
+  const hours = parseInt(timeMatch[1], 10)
+  const mins = parseInt(timeMatch[2], 10)
+  const durMins = parseInt(duration.replace(/\D/g, ""), 10)
+  if (isNaN(durMins)) return ""
+  const totalMins = hours * 60 + mins + durMins
+  const newH = Math.floor(totalMins / 60) % 24
+  const newM = totalMins % 60
+  return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`
+}
+
 interface ProgramItem {
   id?: string
   section: string
@@ -220,60 +247,92 @@ function SabadoTab() {
         <ProgramSelector programs={programs} selectedId={selectedProgramId} onSelect={setSelectedProgramId} />
       )}
 
-      <div ref={tableRef} className="w-full overflow-x-auto rounded-lg border border-border shadow-sm bg-card">
-        <table className="w-full border-collapse min-w-[480px]">
-          <thead>
-            <tr>
-              <th colSpan={4} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: "#2c3e6b", color: "#ffffff" }}>
-                <HeaderEditable
-                  title={selectedProgram.title}
-                  date={selectedProgram.program_date}
-                  leader={selectedProgram.leader}
-                  editingDate={editingDate}
-                  editingLeader={editingLeader}
-                  dateValue={dateValue}
-                  leaderValue={leaderValue}
-                  savingField={savingField}
-                  setEditingDate={setEditingDate}
-                  setEditingLeader={setEditingLeader}
-                  setDateValue={setDateValue}
-                  setLeaderValue={setLeaderValue}
-                  handleDateSave={handleDateSave}
-                  handleLeaderSave={handleLeaderSave}
-                />
-              </th>
-            </tr>
-            <ColumnHeaders color="#3b5998" />
-          </thead>
-          <tbody>
-            {cultoItems.map((item, index) => (
-              <tr key={item.id || `culto-${index}`} className="border-b border-[#c5d0e0]" style={{ backgroundColor: index % 2 === 0 ? "#dce3f0" : "#e8eef6" }}>
-                <td className="px-2 md:px-3 py-2 text-xs md:text-sm font-semibold" style={{ color: "#2c3e6b" }}>{item.time}</td>
-                <td className="px-2 md:px-3 py-2 text-xs md:text-sm" style={{ color: "#4a5568" }}>{item.duration || ""}</td>
-                <td className="px-2 md:px-3 py-2 text-xs md:text-sm" style={{ color: "#2d3748" }}>{item.activity}</td>
-                <td className="px-1 md:px-2 py-1">
-                  <ResponsibleCell item={item} saving={savingField === item.id} onSave={handleResponsibleSave} colorScheme="blue" />
-                </td>
-              </tr>
-            ))}
-            <tr>
-              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Horário</th>
-              <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Tempo</th>
-              <th className="px-2 md:px-3 py-2 text-center text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Escola Sabatina</th>
-              <th className="px-2 md:px-3 py-2 text-center text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>Responsável</th>
-            </tr>
-            {escolaItems.map((item, index) => (
-              <tr key={item.id || `escola-${index}`} className="border-b border-[#b8ccaa]" style={{ backgroundColor: index % 2 === 0 ? "#d6e4c8" : "#e4eeda" }}>
-                <td className="px-2 md:px-3 py-2 text-xs md:text-sm font-semibold" style={{ color: "#3a5a2a" }}>{item.time}</td>
-                <td className="px-2 md:px-3 py-2 text-xs md:text-sm" style={{ color: "#4a5568" }}>{item.duration || "-"}</td>
-                <td className="px-2 md:px-3 py-2 text-xs md:text-sm" style={{ color: "#2d3748" }}>{item.activity}</td>
-                <td className="px-1 md:px-2 py-1">
-                  <ResponsibleCell item={item} saving={savingField === item.id} onSave={handleResponsibleSave} colorScheme="green" />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div ref={tableRef} className="w-full rounded-lg border border-border shadow-sm bg-card overflow-hidden">
+        {/* CABEÇALHO GLOBAL */}
+        <div className="w-full px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: "#2c3e6b", color: "#ffffff" }}>
+          <HeaderEditable
+            title={selectedProgram.title}
+            date={selectedProgram.program_date}
+            leader={selectedProgram.leader}
+            editingDate={editingDate}
+            editingLeader={editingLeader}
+            dateValue={dateValue}
+            leaderValue={leaderValue}
+            savingField={savingField}
+            setEditingDate={setEditingDate}
+            setEditingLeader={setEditingLeader}
+            setDateValue={setDateValue}
+            setLeaderValue={setLeaderValue}
+            handleDateSave={handleDateSave}
+            handleLeaderSave={handleLeaderSave}
+          />
+        </div>
+
+        {/* CULTO */}
+        <div className="hidden md:grid grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px]" style={{ backgroundColor: "#3b5998" }}>
+          <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Horário</div>
+          <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Tempo</div>
+          <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Atividade</div>
+          <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Responsável</div>
+        </div>
+
+        <div className="flex flex-col">
+          {cultoItems.map((item, index) => (
+            <div 
+              key={item.id || `culto-${index}`} 
+              className="flex flex-col md:grid md:grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px] border-b border-[#c5d0e0] p-3 md:p-0 gap-2 md:gap-0"
+              style={{ backgroundColor: index % 2 === 0 ? "#dce3f0" : "#e8eef6" }}
+            >
+              {/* Desktop and Mobile Content */}
+              <div className="flex items-center gap-2 md:hidden">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#3b5998", color: "white" }}>{item.time}</span>
+                {item.duration && <span className="text-xs text-muted-foreground">{item.duration}</span>}
+              </div>
+              <div className="hidden md:flex px-3 py-2 text-sm font-semibold items-center" style={{ color: "#2c3e6b" }}>{item.time}</div>
+              <div className="hidden md:flex px-3 py-2 text-sm items-center" style={{ color: "#4a5568" }}>{item.duration || ""}</div>
+              
+              <div className="text-sm font-medium md:flex px-0 md:px-3 py-0 md:py-2 items-center" style={{ color: "#2d3748" }}>{item.activity}</div>
+              
+              <div className="w-full md:w-auto md:px-2 py-1 flex items-center">
+                <ResponsibleCell item={item} saving={savingField === item.id} onSave={handleResponsibleSave} colorScheme="blue" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ESCOLA SABATINA */}
+        <div className="w-full px-3 py-2 text-left text-xs font-bold uppercase tracking-wider mt-4 md:mt-0 md:grid md:grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px] hidden" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>
+          <div>Horário</div>
+          <div>Tempo</div>
+          <div>Escola Sabatina</div>
+          <div>Responsável</div>
+        </div>
+        <div className="md:hidden w-full px-3 py-2 text-center text-xs font-bold uppercase tracking-wider mt-4" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>
+          ESCOLA SABATINA
+        </div>
+
+        <div className="flex flex-col">
+          {escolaItems.map((item, index) => (
+            <div 
+              key={item.id || `escola-${index}`} 
+              className="flex flex-col md:grid md:grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px] border-b border-[#b8ccaa] p-3 md:p-0 gap-2 md:gap-0"
+              style={{ backgroundColor: index % 2 === 0 ? "#d6e4c8" : "#e4eeda" }}
+            >
+              <div className="flex items-center gap-2 md:hidden">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#5a7a3a", color: "white" }}>{item.time}</span>
+                {item.duration && <span className="text-xs text-muted-foreground">{item.duration}</span>}
+              </div>
+              <div className="hidden md:flex px-3 py-2 text-sm font-semibold items-center" style={{ color: "#3a5a2a" }}>{item.time}</div>
+              <div className="hidden md:flex px-3 py-2 text-sm items-center" style={{ color: "#4a5568" }}>{item.duration || "-"}</div>
+              
+              <div className="text-sm font-medium md:flex px-0 md:px-3 py-0 md:py-2 items-center" style={{ color: "#2d3748" }}>{item.activity}</div>
+              
+              <div className="w-full md:w-auto md:px-2 py-1 flex items-center">
+                <ResponsibleCell item={item} saving={savingField === item.id} onSave={handleResponsibleSave} colorScheme="green" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -433,10 +492,10 @@ function DomingoTab() {
             {items.map((item, index) => (
               <tr key={item.id || `dom-${index}`} className="border-b border-[#b8ccdd]" style={{ backgroundColor: index % 2 === 0 ? "#dce8f4" : "#e8f0f8" }}>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" />
+                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" type="time" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" />
+                  <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" type="duration" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
                   <EditableCell value={item.activity} saving={savingField === `${index}-activity`} onSave={(v) => handleCellSave(index, "activity", v)} placeholder="Atividade" />
@@ -456,30 +515,6 @@ function DomingoTab() {
 /* ══════════════════════════════════
    QUARTA - create custom programs, clear only responsavel
    ══════════════════════════════════ */
-function formatTimeInput(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 4)
-  if (digits.length <= 2) return digits
-  return digits.slice(0, 2) + ":" + digits.slice(2)
-}
-
-function formatDurationInput(raw: string): string {
-  const digits = raw.replace(/\D/g, "")
-  if (!digits) return ""
-  return digits + " min"
-}
-
-function calcNextTime(time: string, duration: string): string {
-  const timeMatch = time.match(/^(\d{1,2})[h:](\d{2})$/)
-  if (!timeMatch) return ""
-  const hours = parseInt(timeMatch[1], 10)
-  const mins = parseInt(timeMatch[2], 10)
-  const durMins = parseInt(duration.replace(/\D/g, ""), 10)
-  if (isNaN(durMins)) return ""
-  const totalMins = hours * 60 + mins + durMins
-  const newH = Math.floor(totalMins / 60) % 24
-  const newM = totalMins % 60
-  return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`
-}
 
 function QuartaTab() {
   const { data: programs } = useSWR<ProgramListItem[]>("/api/programs?program_type=quarta", fetcher)
@@ -618,10 +653,10 @@ function QuartaTab() {
             {items.map((item, index) => (
               <tr key={item.id || `qua-${index}`} className="border-b border-[#a8ccb8]" style={{ backgroundColor: index % 2 === 0 ? "#d4e8dc" : "#e2f0e8" }}>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" />
+                  <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" type="time" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
-                  <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" />
+                  <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" type="duration" />
                 </td>
                 <td className="px-1 md:px-2 py-1">
                   <EditableCell value={item.activity} saving={savingField === `${index}-activity`} onSave={(v) => handleCellSave(index, "activity", v)} placeholder="Atividade" />
@@ -792,7 +827,9 @@ function EspeciaisTab() {
     const c = [...newItems]
     let value = raw
     if (field === "time") value = formatTimeInput(raw)
-    if (field === "duration") value = formatDurationInput(raw)
+    // Para duration, deixamos apenas dígitos enquanto digita para não atrapalhar
+    if (field === "duration") value = raw.replace(/\D/g, "")
+    
     c[idx] = { ...c[idx], [field]: value }
     if ((field === "time" || field === "duration") && idx < c.length - 1) {
       const next = calcNextTime(c[idx].time || "", c[idx].duration || "")
@@ -926,7 +963,7 @@ function EspeciaisTab() {
                       <input type="text" value={item.time} onChange={(e) => handleNewItemChange(idx, "time", e.target.value)} placeholder="19:00" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
                     </td>
                     <td className="px-1 md:px-2 py-1">
-                      <input type="text" value={item.duration} onChange={(e) => handleNewItemChange(idx, "duration", e.target.value)} placeholder="15 min" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
+                      <input type="text" value={item.duration} onChange={(e) => handleNewItemChange(idx, "duration", e.target.value)} onBlur={(e) => handleNewItemChange(idx, "duration", formatDurationInput(e.target.value))} placeholder="15 min" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
                     </td>
                     <td className="px-1 md:px-2 py-1">
                       <input type="text" value={item.activity} onChange={(e) => handleNewItemChange(idx, "activity", e.target.value)} placeholder="Atividade" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
@@ -1033,10 +1070,10 @@ function EspeciaisTab() {
                 {(selectedProgram.program_items || []).map((item, index) => (
                   <tr key={item.id || `esp-${index}`} className="border-b border-[#c4b8d4]" style={{ backgroundColor: index % 2 === 0 ? "#e8dff0" : "#f0eaf6" }}>
                     <td className="px-1 md:px-2 py-1">
-                      <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" />
+                      <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" type="time" />
                     </td>
                     <td className="px-1 md:px-2 py-1">
-                      <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" />
+                      <EditableCell value={item.duration} saving={savingField === `${index}-duration`} onSave={(v) => handleCellSave(index, "duration", v)} placeholder="Tempo" type="duration" />
                     </td>
                     <td className="px-1 md:px-2 py-1">
                       <EditableCell value={item.activity} saving={savingField === `${index}-activity`} onSave={(v) => handleCellSave(index, "activity", v)} placeholder="Atividade" />
@@ -1187,9 +1224,9 @@ function HeaderEditable({
 
 /* Editable cell for Domingo/Quarta where all fields are editable */
 function EditableCell({
-  value, saving, onSave, placeholder,
+  value, saving, onSave, placeholder, type,
 }: {
-  value: string; saving: boolean; onSave: (v: string) => void; placeholder: string
+  value: string; saving: boolean; onSave: (v: string) => void; placeholder: string; type?: "time" | "duration"
 }) {
   const [localValue, setLocalValue] = useState(value)
   const [editing, setEditing] = useState(false)
@@ -1197,11 +1234,16 @@ function EditableCell({
   useEffect(() => { setLocalValue(value) }, [value])
 
   function handleSave() {
-    if (localValue !== value) onSave(localValue)
+    let finalValue = localValue
+    if (type === "time") finalValue = formatTimeInput(localValue)
+    if (type === "duration") finalValue = formatDurationInput(localValue)
+    
+    if (finalValue !== value) onSave(finalValue)
     setEditing(false)
   }
 
   if (!editing) {
+    const displayValue = type === "time" ? formatTimeInput(value) : type === "duration" ? formatDurationInput(value) : value
     return (
       <button
         type="button"
@@ -1209,8 +1251,8 @@ function EditableCell({
         className="w-full text-left text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 hover:bg-white/60 transition-all min-h-[34px] flex items-center justify-start gap-1 bg-white/40"
         style={{ color: "#2d3748" }}
       >
-        {value ? (
-          <span className="flex items-center gap-1">{value}<Pencil className="h-3 w-3 opacity-40 shrink-0" /></span>
+        {displayValue ? (
+          <span className="flex items-center gap-1">{displayValue}<Pencil className="h-3 w-3 opacity-40 shrink-0" /></span>
         ) : (
           <span className="text-gray-400 italic flex items-center gap-1"><Pencil className="h-3 w-3" />{placeholder}</span>
         )}
@@ -1223,7 +1265,11 @@ function EditableCell({
       <input
         type="text"
         value={localValue}
-        onChange={(e) => setLocalValue(e.target.value)}
+        onChange={(e) => {
+          let val = e.target.value
+          if (type === "time") val = formatTimeInput(val)
+          setLocalValue(val)
+        }}
         onBlur={handleSave}
         onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") { setLocalValue(value); setEditing(false) } }}
         className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-gray-400 bg-white outline-none focus:ring-1 focus:ring-blue-400 text-left"

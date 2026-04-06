@@ -4,7 +4,8 @@ import React from "react"
 
 import { useState } from "react"
 import useSWR from "swr"
-import { Users, Plus, Pencil, Trash2 } from "lucide-react"
+import { Users, Plus, Pencil, Trash2, Search, LayoutGrid, List } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -33,6 +34,8 @@ export function DepartmentsView() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Department | null>(null)
   const [form, setForm] = useState({ name: "", description: "", color: "#2563EB", director: "" })
+  const [search, setSearch] = useState("")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
   function openCreate() {
     setEditing(null)
@@ -78,6 +81,12 @@ export function DepartmentsView() {
     }
   }
 
+  const filteredDepartments = departments?.filter(d => 
+    d.name.toLowerCase().includes(search.toLowerCase()) || 
+    (d.director && d.director.toLowerCase().includes(search.toLowerCase())) ||
+    (d.description && d.description.toLowerCase().includes(search.toLowerCase()))
+  ) || []
+
   return (
     <div className="p-4 md:p-6 w-full">
       <div className="flex flex-col gap-6">
@@ -91,15 +100,45 @@ export function DepartmentsView() {
           </p>
         </div>
 
-        <div className="flex justify-end">
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreate} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Novo Departamento
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mt-2">
+          <div className="flex w-full sm:max-w-md items-center relative">
+            <Search className="h-4 w-4 absolute left-3 text-muted-foreground" />
+            <Input 
+              placeholder="Pesquisar departamentos, titulares ou descrições..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+              className="pl-9 h-9" 
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="flex items-center border rounded-md p-0.5 bg-muted/30">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={cn("h-8 w-9 px-2", viewMode === "grid" && "bg-background shadow-sm")} 
+                onClick={() => setViewMode("grid")}
+                title="Visualizar em grade"
+              >
+                <LayoutGrid className="h-4 w-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={cn("h-8 w-9 px-2", viewMode === "list" && "bg-background shadow-sm")} 
+                onClick={() => setViewMode("list")}
+                title="Visualizar em lista"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openCreate} size="sm" className="h-9">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Novo Departamento
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editing ? "Editar Departamento" : "Novo Departamento"}</DialogTitle>
               </DialogHeader>
@@ -159,19 +198,28 @@ export function DepartmentsView() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {!departments || departments.length === 0 ? (
-          <Card>
+          <Card className="mt-4">
             <CardContent className="py-12 text-center text-muted-foreground">
               <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
               <p>Nenhum departamento cadastrado.</p>
               <p className="text-xs mt-1">Clique em &quot;Novo Departamento&quot; para começar.</p>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {departments.map((dept) => (
+        ) : filteredDepartments.length === 0 ? (
+          <Card className="mt-4">
+            <CardContent className="py-12 text-center text-muted-foreground">
+              <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p>Nenhum departamento encontrado.</p>
+              <p className="text-xs mt-1">Tente buscar por outro termo.</p>
+            </CardContent>
+          </Card>
+        ) : viewMode === "grid" ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+            {filteredDepartments.map((dept) => (
               <Card key={dept.id} className="relative group overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: dept.color }} />
                 <CardHeader className="pb-2">
@@ -214,6 +262,42 @@ export function DepartmentsView() {
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {dept.description || "Sem descrição"}
                   </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 mt-4">
+            {filteredDepartments.map((dept) => (
+              <Card key={dept.id} className="relative group overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: dept.color }} />
+                <CardContent className="p-4 sm:p-5 flex items-center justify-between pl-5">
+                  <div className="flex flex-col gap-1 w-full">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
+                      <span className="font-medium text-base text-card-foreground">{dept.name}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 ml-[1.35rem]">
+                      {dept.director && (
+                        <p className="text-sm font-medium text-foreground whitespace-nowrap">
+                          Titular: <span className="text-muted-foreground ml-1">{dept.director}</span>
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground truncate">
+                        {dept.description || "Sem descrição"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(dept)}>
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Editar</span>
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(dept.id)}>
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Remover</span>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
