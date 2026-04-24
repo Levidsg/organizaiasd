@@ -105,7 +105,7 @@ export function AgendaView() {
   });
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
   const [forceCreate, setForceCreate] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "calendar">("calendar");
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
   const { data: departments } = useSWR<Department[]>(
     "/api/departments",

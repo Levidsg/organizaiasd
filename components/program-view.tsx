@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 
+import { usePhoneLogin } from "@/components/phone-login-provider"
+import { ProgramHistory } from "@/components/program-history"
+import { logHistory } from "@/lib/history-tracker"
+
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 function formatTimeInput(raw: string): string {
@@ -139,6 +143,7 @@ function SabadoTab() {
   const [dateValue, setDateValue] = useState("")
   const [savingField, setSavingField] = useState("")
   const [clearing, setClearing] = useState(false)
+  const { user } = usePhoneLogin()
 
   useEffect(() => {
     if (selectedProgram) {
@@ -171,28 +176,40 @@ function SabadoTab() {
     async (itemId: string, value: string) => {
       if (!selectedProgram) return
       setSavingField(itemId)
+      const targetItem = selectedProgram.program_items.find(i => i.id === itemId)
       const updatedItems = selectedProgram.program_items.map((item) =>
         item.id === itemId ? { ...item, responsible: value } : item,
       )
       const ok = await saveProgram({ items: updatedItems })
       setSavingField("")
-      if (ok) toast.success("Responsável salvo!")
+      if (ok) {
+        toast.success("Responsável salvo!")
+        if (targetItem && user) logHistory(selectedProgram.id, "sabado", user.name, "updated", `alterou o responsável de "${targetItem.activity}" para "${value || 'vazio'}"`)
+      }
     },
-    [selectedProgram, saveProgram],
+    [selectedProgram, saveProgram, user],
   )
 
   async function handleLeaderSave() {
     setSavingField("leader")
     const ok = await saveProgram({ leader: leaderValue })
     setSavingField("")
-    if (ok) { toast.success("Dirigente salvo!"); setEditingLeader(false) }
+    if (ok) {
+      toast.success("Dirigente salvo!")
+      if (user && selectedProgram) logHistory(selectedProgram.id, "sabado", user.name, "updated", `alterou o dirigente para "${leaderValue || 'vazio'}"`)
+      setEditingLeader(false) 
+    }
   }
 
   async function handleDateSave() {
     setSavingField("date")
     const ok = await saveProgram({ program_date: dateValue })
     setSavingField("")
-    if (ok) { toast.success("Data salva!"); setEditingDate(false) }
+    if (ok) {
+      toast.success("Data salva!")
+      if (user && selectedProgram) logHistory(selectedProgram.id, "sabado", user.name, "updated", `alterou a data para "${dateValue}"`)
+      setEditingDate(false) 
+    }
   }
 
   async function handleClearAll() {
@@ -202,7 +219,10 @@ function SabadoTab() {
     const clearedItems = selectedProgram.program_items.map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
     setClearing(false)
-    if (ok) toast.success("Campos limpos!")
+    if (ok) {
+      toast.success("Campos limpos!")
+      if (user) logHistory(selectedProgram.id, "sabado", user.name, "cleared", `limpou todos os campos de responsáveis`)
+    }
   }
 
   async function handleExportPNG() {
@@ -237,7 +257,8 @@ function SabadoTab() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs md:text-sm text-muted-foreground">Toque nos campos para editar responsáveis, dirigente e data</p>
-        <div className="flex gap-2 self-start sm:self-auto">
+        <div className="flex gap-2 self-start sm:self-auto flex-wrap">
+          <ProgramHistory programId={selectedProgram.id} programType="sabado" />
           <ClearButton clearing={clearing} onClick={handleClearAll} />
           <ExportButton exporting={exporting} onClick={handleExportPNG} />
         </div>
@@ -364,6 +385,7 @@ function DomingoTab() {
   const [dateValue, setDateValue] = useState("")
   const [savingField, setSavingField] = useState("")
   const [clearing, setClearing] = useState(false)
+  const { user } = usePhoneLogin()
 
   useEffect(() => {
     if (selectedProgram) {
@@ -396,28 +418,41 @@ function DomingoTab() {
     async (itemIndex: number, field: string, value: string) => {
       if (!selectedProgram) return
       setSavingField(`${itemIndex}-${field}`)
+      const targetItem = selectedProgram.program_items[itemIndex]
       const updatedItems = selectedProgram.program_items.map((item, idx) =>
         idx === itemIndex ? { ...item, [field]: value } : item,
       )
       const ok = await saveProgram({ items: updatedItems })
       setSavingField("")
-      if (ok) toast.success("Salvo!")
+      if (ok) {
+        toast.success("Salvo!")
+        const fTranslated = { time: "o horário", duration: "o tempo", activity: "a atividade", responsible: "o responsável" }[field] || field
+        if (targetItem && user) logHistory(selectedProgram.id, "domingo", user.name, "updated", `alterou ${fTranslated} de "${targetItem.activity}" para "${value || 'vazio'}"`)
+      }
     },
-    [selectedProgram, saveProgram],
+    [selectedProgram, saveProgram, user],
   )
 
   async function handleLeaderSave() {
     setSavingField("leader")
     const ok = await saveProgram({ leader: leaderValue })
     setSavingField("")
-    if (ok) { toast.success("Dirigente salvo!"); setEditingLeader(false) }
+    if (ok) {
+      toast.success("Dirigente salvo!")
+      if (user && selectedProgram) logHistory(selectedProgram.id, "domingo", user.name, "updated", `alterou o dirigente para "${leaderValue || 'vazio'}"`)
+      setEditingLeader(false) 
+    }
   }
 
   async function handleDateSave() {
     setSavingField("date")
     const ok = await saveProgram({ program_date: dateValue })
     setSavingField("")
-    if (ok) { toast.success("Data salva!"); setEditingDate(false) }
+    if (ok) {
+      toast.success("Data salva!")
+      if (user && selectedProgram) logHistory(selectedProgram.id, "domingo", user.name, "updated", `alterou a data para "${dateValue}"`)
+      setEditingDate(false) 
+    }
   }
 
   async function handleClearAll() {
@@ -427,7 +462,10 @@ function DomingoTab() {
     const clearedItems = selectedProgram.program_items.map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
     setClearing(false)
-    if (ok) toast.success("Campos limpos!")
+    if (ok) {
+      toast.success("Campos limpos!")
+      if (user) logHistory(selectedProgram.id, "domingo", user.name, "cleared", `limpou todos os campos de responsáveis`)
+    }
   }
 
   async function handleExportPNG() {
@@ -453,7 +491,8 @@ function DomingoTab() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs md:text-sm text-muted-foreground">Todos os campos são editáveis. Limpar afeta somente responsáveis.</p>
-        <div className="flex gap-2 self-start sm:self-auto">
+        <div className="flex gap-2 self-start sm:self-auto flex-wrap">
+          <ProgramHistory programId={selectedProgram.id} programType="domingo" />
           <ClearButton clearing={clearing} onClick={handleClearAll} />
           <ExportButton exporting={exporting} onClick={handleExportPNG} />
         </div>
@@ -526,6 +565,7 @@ function QuartaTab() {
   const [leaderValue, setLeaderValue] = useState("")
   const [savingField, setSavingField] = useState("")
   const [clearing, setClearing] = useState(false)
+  const { user } = usePhoneLogin()
 
   useEffect(() => {
     if (program) setLeaderValue(program.leader || "")
@@ -555,21 +595,30 @@ function QuartaTab() {
     async (itemIndex: number, field: string, value: string) => {
       if (!program) return
       setSavingField(`${itemIndex}-${field}`)
+      const targetItem = (program.program_items || [])[itemIndex]
       const updatedItems = (program.program_items || []).map((item, idx) =>
         idx === itemIndex ? { ...item, [field]: value } : item,
       )
       const ok = await saveProgram({ items: updatedItems })
       setSavingField("")
-      if (ok) toast.success("Salvo!")
+      if (ok) {
+        toast.success("Salvo!")
+        const fTranslated = { time: "o horário", duration: "o tempo", activity: "a atividade", responsible: "o responsável" }[field] || field
+        if (targetItem && user) logHistory(program.id, "quarta", user.name, "updated", `alterou ${fTranslated} de "${targetItem.activity}" para "${value || 'vazio'}"`)
+      }
     },
-    [program, saveProgram],
+    [program, saveProgram, user],
   )
 
   async function handleLeaderSave() {
     setSavingField("leader")
     const ok = await saveProgram({ leader: leaderValue })
     setSavingField("")
-    if (ok) { toast.success("Dirigente salvo!"); setEditingLeader(false) }
+    if (ok) {
+      toast.success("Dirigente salvo!")
+      if (user && program) logHistory(program.id, "quarta", user.name, "updated", `alterou o dirigente para "${leaderValue || 'vazio'}"`)
+      setEditingLeader(false) 
+    }
   }
 
   async function handleClearAll() {
@@ -579,7 +628,10 @@ function QuartaTab() {
     const clearedItems = (program.program_items || []).map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
     setClearing(false)
-    if (ok) toast.success("Campos limpos!")
+    if (ok) {
+      toast.success("Campos limpos!")
+      if (user) logHistory(program.id, "quarta", user.name, "cleared", `limpou todos os campos de responsáveis`)
+    }
   }
 
   async function handleMoveRow(fromIndex: number, direction: "up" | "down") {
@@ -589,8 +641,11 @@ function QuartaTab() {
     if (toIndex < 0 || toIndex >= items.length) return
     ;[items[fromIndex], items[toIndex]] = [items[toIndex], items[fromIndex]]
     const reordered = items.map((item, idx) => ({ ...item, sort_order: idx }))
-    await saveProgram({ items: reordered })
-    toast.success("Ordem alterada!")
+    const ok = await saveProgram({ items: reordered })
+    if (ok) {
+      toast.success("Ordem alterada!")
+      if (user) logHistory(program.id, "quarta", user.name, "updated", `alterou a ordem da atividade "${items[toIndex].activity}" para ${direction === "up" ? "cima" : "baixo"}`)
+    }
   }
 
   async function handleExportPNG() {
@@ -618,7 +673,8 @@ function QuartaTab() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs md:text-sm text-muted-foreground">Todos os campos são editáveis. Limpar afeta somente responsáveis.</p>
-        <div className="flex gap-2 self-start sm:self-auto">
+        <div className="flex gap-2 self-start sm:self-auto flex-wrap">
+          <ProgramHistory programId={programId || ""} programType="quarta" />
           <ClearButton clearing={clearing} onClick={handleClearAll} />
           <ExportButton exporting={exporting} onClick={handleExportPNG} />
         </div>
@@ -714,6 +770,7 @@ function EspeciaisTab() {
   const [savingField, setSavingField] = useState("")
   const [clearing, setClearing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const { user } = usePhoneLogin()
 
   const [newTitle, setNewTitle] = useState("")
   const [newDate, setNewDate] = useState("")
@@ -754,35 +811,52 @@ function EspeciaisTab() {
     async (itemIndex: number, field: string, value: string) => {
       if (!selectedProgram) return
       setSavingField(`${itemIndex}-${field}`)
+      const targetItem = (selectedProgram.program_items || [])[itemIndex]
       const updatedItems = (selectedProgram.program_items || []).map((item, idx) =>
         idx === itemIndex ? { ...item, [field]: value } : item,
       )
       const ok = await saveProgram({ items: updatedItems })
       setSavingField("")
-      if (ok) toast.success("Salvo!")
+      if (ok) {
+        toast.success("Salvo!")
+        const fTranslated = { time: "o horário", duration: "o tempo", activity: "a atividade", responsible: "o responsável" }[field] || field
+        if (targetItem && user) logHistory(selectedProgram.id, "especiais", user.name, "updated", `alterou ${fTranslated} de "${targetItem.activity}" para "${value || 'vazio'}"`)
+      }
     },
-    [selectedProgram, saveProgram],
+    [selectedProgram, saveProgram, user],
   )
 
   async function handleTitleSave() {
     setSavingField("title")
     const ok = await saveProgram({ title: titleValue })
     setSavingField("")
-    if (ok) { toast.success("Titulo salvo!"); setEditingTitle(false) }
+    if (ok) {
+      toast.success("Titulo salvo!")
+      if (user && selectedProgram) logHistory(selectedProgram.id, "especiais", user.name, "updated", `alterou o titulo para "${titleValue}"`)
+      setEditingTitle(false) 
+    }
   }
 
   async function handleLeaderSave() {
     setSavingField("leader")
     const ok = await saveProgram({ leader: leaderValue })
     setSavingField("")
-    if (ok) { toast.success("Dirigente salvo!"); setEditingLeader(false) }
+    if (ok) {
+      toast.success("Dirigente salvo!")
+      if (user && selectedProgram) logHistory(selectedProgram.id, "especiais", user.name, "updated", `alterou o dirigente para "${leaderValue || 'vazio'}"`)
+      setEditingLeader(false) 
+    }
   }
 
   async function handleDateSave() {
     setSavingField("date")
     const ok = await saveProgram({ program_date: dateValue })
     setSavingField("")
-    if (ok) { toast.success("Data salva!"); setEditingDate(false) }
+    if (ok) {
+      toast.success("Data salva!")
+      if (user && selectedProgram) logHistory(selectedProgram.id, "especiais", user.name, "updated", `alterou a data para "${dateValue}"`)
+      setEditingDate(false) 
+    }
   }
 
   async function handleClearAll() {
@@ -792,7 +866,10 @@ function EspeciaisTab() {
     const clearedItems = (selectedProgram.program_items || []).map((item) => ({ ...item, responsible: "" }))
     const ok = await saveProgram({ items: clearedItems })
     setClearing(false)
-    if (ok) toast.success("Campos limpos!")
+    if (ok) {
+      toast.success("Campos limpos!")
+      if (user) logHistory(selectedProgram.id, "especiais", user.name, "cleared", `limpou todos os campos de responsáveis`)
+    }
   }
 
   async function handleAddRow() {
@@ -819,8 +896,11 @@ function EspeciaisTab() {
     if (toIndex < 0 || toIndex >= items.length) return
     ;[items[fromIndex], items[toIndex]] = [items[toIndex], items[fromIndex]]
     const reordered = items.map((item, idx) => ({ ...item, sort_order: idx }))
-    await saveProgram({ items: reordered })
-    toast.success("Ordem alterada!")
+    const ok = await saveProgram({ items: reordered })
+    if (ok) {
+      toast.success("Ordem alterada!")
+      if (user) logHistory(selectedProgram.id, "especiais", user.name, "updated", `alterou a ordem da atividade "${items[toIndex].activity}" para ${direction === "up" ? "cima" : "baixo"}`)
+    }
   }
 
   function handleNewItemChange(idx: number, field: string, raw: string) {
@@ -1009,7 +1089,8 @@ function EspeciaisTab() {
         <>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs md:text-sm text-muted-foreground">Todos os campos são editáveis. Use as setas para reordenar.</p>
-            <div className="flex gap-2 self-start sm:self-auto">
+            <div className="flex gap-2 self-start sm:self-auto flex-wrap">
+              <ProgramHistory programId={selectedProgram.id} programType="especiais" />
               <ClearButton clearing={clearing} onClick={handleClearAll} />
               <Button onClick={handleDeleteProgram} size="sm" variant="outline" className="gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive bg-transparent">
                 <Trash2 className="h-4 w-4" /> Excluir
