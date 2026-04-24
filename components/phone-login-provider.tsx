@@ -37,6 +37,7 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
   const [phone, setPhone] = useState("")
   const [name, setName] = useState("")
   const [error, setError] = useState("")
+  const [knownName, setKnownName] = useState("")
 
   useEffect(() => {
     const stored = localStorage.getItem("appUser")
@@ -55,6 +56,37 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
     setMounted(true)
   }, [])
 
+  const loginUser = (phoneNum: string, userName: string) => {
+    const plainPhone = phoneNum.replace(/\D/g, "")
+    const newUser: AppUser = {
+      name: userName.trim(),
+      phone: phoneNum,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 1 dia = 24 horas
+    }
+
+    localStorage.setItem("appUser", JSON.stringify(newUser))
+    
+    try {
+      const storedMap = localStorage.getItem("appKnownUsers")
+      const knownUsers = storedMap ? JSON.parse(storedMap) : {}
+      knownUsers[plainPhone] = userName.trim()
+      localStorage.setItem("appKnownUsers", JSON.stringify(knownUsers))
+    } catch {}
+
+    setUser(newUser)
+  }
+
+  const plainPhone = phone.replace(/\D/g, "")
+
+  useEffect(() => {
+    if (plainPhone.length === 11 && knownName) {
+      const timer = setTimeout(() => {
+        loginUser(phone, knownName)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [plainPhone, knownName, phone])
+
   if (!mounted) return null // Hide until hydration completes
 
   if (user) {
@@ -69,35 +101,26 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
     e.preventDefault()
     setError("")
     
-    if (name.trim().length < 3) {
-      setError("Por favor, preencha um nome válido.")
-      return
-    }
-    
-    const plainPhone = phone.replace(/\D/g, "")
     if (plainPhone.length < 10) {
       setError("Por favor, preencha um telefone válido.")
       return
     }
 
-    const newUser: AppUser = {
-      name: name.trim(),
-      phone: phone,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 1 dia = 24 horas
+    if (knownName) {
+      loginUser(phone, knownName)
+      return
     }
 
-    localStorage.setItem("appUser", JSON.stringify(newUser))
+    if (name.trim().length < 3) {
+      setError("Por favor, preencha um nome válido.")
+      return
+    }
     
-    // Save to known users map so next time they only need to type the phone
-    try {
-      const storedMap = localStorage.getItem("appKnownUsers")
-      const knownUsers = storedMap ? JSON.parse(storedMap) : {}
-      knownUsers[plainPhone] = name.trim()
-      localStorage.setItem("appKnownUsers", JSON.stringify(knownUsers))
-    } catch {}
-
-    setUser(newUser)
+    loginUser(phone, name)
   }
+
+  const isCompletePhone = plainPhone.length >= 10
+  const showNameField = isCompletePhone && !knownName
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4 relative" style={{ backgroundImage: "linear-gradient(to bottom right, #09090b, #18181b, #0d121c)"}}>
@@ -130,42 +153,46 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
                 onChange={(e) => {
                   const formatted = formatPhone(e.target.value)
                   setPhone(formatted)
-                  const plainPhone = formatted.replace(/\D/g, "")
-                  const storedMap = localStorage.getItem("appKnownUsers")
-                  if (storedMap) {
-                    try {
+                  const plain = formatted.replace(/\D/g, "")
+                  try {
+                    const storedMap = localStorage.getItem("appKnownUsers")
+                    if (storedMap) {
                       const knownUsers = JSON.parse(storedMap)
-                      if (knownUsers[plainPhone]) {
-                        setName(knownUsers[plainPhone])
-                      }
-                    } catch {}
+                      setKnownName(knownUsers[plain] || "")
+                    } else {
+                      setKnownName("")
+                    }
+                  } catch {
+                    setKnownName("")
                   }
                 }}
                 required
               />
             </div>
-          </div>
-          
-          <div className={`space-y-2 transition-all duration-300 ${name && phone.length >= 14 ? "opacity-70" : "opacity-100"}`}>
-            <Label htmlFor="name" className="text-zinc-300">Seu Nome</Label>
-            <div className="relative">
-              <User className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
-              <Input 
-                id="name" 
-                type="text"
-                placeholder="Ex: João da Silva" 
-                className="pl-10 h-12 bg-zinc-950/50 border-zinc-800 text-zinc-100 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary/50 transition-all placeholder:text-zinc-700" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            {name && phone.length >= 14 && (
-              <p className="text-xs text-primary/80 mt-1">
-                Bem-vindo de volta! Pressione Enter para continuar.
+            {knownName && plainPhone.length >= 10 && (
+              <p className="text-xs text-primary/80 mt-1 animate-in fade-in duration-300">
+                Bem-vindo de volta, {knownName.split(" ")[0]}!
               </p>
             )}
           </div>
+          
+          {showNameField && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <Label htmlFor="name" className="text-zinc-300">Seu Nome</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+                <Input 
+                  id="name" 
+                  type="text"
+                  placeholder="Ex: João da Silva" 
+                  className="pl-10 h-12 bg-zinc-950/50 border-zinc-800 text-zinc-100 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary/50 transition-all placeholder:text-zinc-700" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={showNameField}
+                />
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -185,3 +212,4 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
     </div>
   )
 }
+

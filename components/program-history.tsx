@@ -74,7 +74,7 @@ export function ProgramHistory({ programId, programType }: ProgramHistoryProps) 
           )}
 
           {history && history.length > 0 && (
-            <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+            <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
               {history.map((item) => (
                 <div key={item.id} className="relative flex items-start justify-between gap-4 py-4 px-2">
                   <div className="absolute left-0 w-[24px] flex items-center justify-center">
