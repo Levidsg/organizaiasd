@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from "react"
-import { Phone, User } from "lucide-react"
+import { Church, Phone, User } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -123,32 +123,32 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
   const showNameField = isCompletePhone && !knownName
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4 relative" style={{ backgroundImage: "linear-gradient(to bottom right, #09090b, #18181b, #0d121c)"}}>
-      <div className="absolute inset-0 bg-blue-500/5 mix-blend-screen pointer-events-none" />
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 relative" style={{ backgroundImage: "linear-gradient(to bottom right, #f8fafc, #f1f5f9, #e2e8f0)"}}>
+      <div className="absolute inset-0 bg-blue-500/5 mix-blend-multiply pointer-events-none" />
       
-      <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 shadow-2xl rounded-2xl p-6 sm:p-8 relative z-10 relative overflow-hidden">
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-xl border border-slate-200 shadow-2xl rounded-3xl p-6 sm:p-8 relative z-10 overflow-hidden">
         {/* Glow effect inside form box */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/20 blur-3xl rounded-full" />
-        <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-500/20 blur-3xl rounded-full" />
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-400/10 blur-3xl rounded-full" />
+        <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-indigo-400/10 blur-3xl rounded-full" />
         
         <div className="flex flex-col items-center space-y-2 mb-8 relative z-10">
           <div className="p-3 bg-primary/10 rounded-full mb-2 border border-primary/20">
-            <User className="h-6 w-6 text-primary" />
+            <Church className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-100">Acesso Restrito</h1>
-          <p className="text-sm text-zinc-400 text-center">Informe seu telefone e nome para registrar suas alterações nos programas.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">OrganizaIASD</h1>
+          <p className="text-sm text-slate-600 text-center">Esta pedindo o login para registrar as alterações.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-zinc-300">Celular / WhatsApp</Label>
+            <Label htmlFor="phone" className="text-slate-700 font-medium">Celular / WhatsApp</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+              <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
               <Input 
                 id="phone" 
                 type="tel"
                 placeholder="(00) 00000-0000" 
-                className="pl-10 h-12 bg-zinc-950/50 border-zinc-800 text-zinc-100 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary/50 transition-all placeholder:text-zinc-700" 
+                className="pl-11 h-12 bg-white border-slate-200 text-slate-900 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary/50 transition-all placeholder:text-slate-400 rounded-xl" 
                 value={phone}
                 onChange={(e) => {
                   const formatted = formatPhone(e.target.value)
@@ -178,14 +178,14 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
           
           {showNameField && (
             <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <Label htmlFor="name" className="text-zinc-300">Seu Nome</Label>
+              <Label htmlFor="name" className="text-slate-700 font-medium">Seu Nome</Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+                <User className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                 <Input 
                   id="name" 
                   type="text"
                   placeholder="Ex: João da Silva" 
-                  className="pl-10 h-12 bg-zinc-950/50 border-zinc-800 text-zinc-100 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary/50 transition-all placeholder:text-zinc-700" 
+                  className="pl-11 h-12 bg-white border-slate-200 text-slate-900 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:border-primary/50 transition-all placeholder:text-slate-400 rounded-xl" 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required={showNameField}
