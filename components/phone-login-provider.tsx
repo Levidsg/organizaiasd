@@ -136,7 +136,8 @@ export function PhoneLoginProvider({ children }: { children: React.ReactNode }) 
             <Church className="h-6 w-6 text-primary" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">OrganizaIASD</h1>
-          <p className="text-sm text-slate-600 text-center">Esta pedindo o login para registrar as alterações.</p>
+          <p className="text-sm text-slate-600 text-center">Insira o SEU número para entrar no sistema.</p>
+          <p className="text-sm text-slate-600 text-center">Usado apenas para fins de registrar as alterações no histórico.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
