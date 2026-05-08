@@ -16,8 +16,17 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 function formatTimeInput(raw: string): string {
   if (!raw) return ""
+  
+  if (raw.includes(":")) {
+    const parts = raw.split(":")
+    const cleanH = parts[0].replace(/\D/g, "").slice(0, 2)
+    const cleanM = parts.slice(1).join("").replace(/\D/g, "").slice(0, 2)
+    return `${cleanH}:${cleanM}`
+  }
+
   const digits = raw.replace(/\D/g, "").slice(0, 4)
   if (digits.length <= 2) return digits
+  if (digits.length === 3) return digits.slice(0, 1) + ":" + digits.slice(1)
   return digits.slice(0, 2) + ":" + digits.slice(2)
 }
 
@@ -172,23 +181,57 @@ function SabadoTab() {
     [selectedProgram, mutate],
   )
 
-  const handleResponsibleSave = useCallback(
-    async (itemId: string, value: string) => {
+  const handleCellSave = useCallback(
+    async (itemId: string, field: string, value: string) => {
       if (!selectedProgram) return
-      setSavingField(itemId)
+      setSavingField(`${itemId}-${field}`)
       const targetItem = selectedProgram.program_items.find(i => i.id === itemId)
       const updatedItems = selectedProgram.program_items.map((item) =>
-        item.id === itemId ? { ...item, responsible: value } : item,
+        item.id === itemId ? { ...item, [field]: value } : item,
       )
       const ok = await saveProgram({ items: updatedItems })
       setSavingField("")
       if (ok) {
-        toast.success("Responsável salvo!")
-        if (targetItem && user) logHistory(selectedProgram.id, "sabado", user.name, "updated", `alterou o responsável de "${targetItem.activity}" para "${value || 'vazio'}"`)
+        toast.success("Salvo!")
+        const fTranslated = { time: "o horário", duration: "o tempo", activity: "a atividade", responsible: "o responsável" }[field] || field
+        if (targetItem && user) logHistory(selectedProgram.id, "sabado", user.name, "updated", `alterou ${fTranslated} de "${targetItem.activity}" para "${value || 'vazio'}"`)
       }
     },
     [selectedProgram, saveProgram, user],
   )
+
+  async function handleAddRowBelow(itemId: string, section: string) {
+    if (!selectedProgram) return
+    const items = [...selectedProgram.program_items]
+    const idx = items.findIndex(i => i.id === itemId)
+    if (idx === -1) return
+    
+    const currentItem = items[idx]
+    const nextTime = calcNextTime(currentItem.time || "", currentItem.duration || "")
+    
+    const newItem: ProgramItem = {
+      section: section,
+      time: nextTime,
+      duration: "",
+      activity: "",
+      responsible: "",
+      sort_order: 0
+    }
+    
+    items.splice(idx + 1, 0, newItem)
+    const reordered = items.map((item, i) => ({ ...item, sort_order: i }))
+    
+    const ok = await saveProgram({ items: reordered })
+    if (ok) toast.success("Linha adicionada!")
+  }
+
+  async function handleDeleteRow(itemId: string) {
+    if (!selectedProgram) return
+    if (!window.confirm("Deseja excluir esta linha?")) return
+    const updatedItems = selectedProgram.program_items.filter(i => i.id !== itemId).map((item, i) => ({ ...item, sort_order: i }))
+    const ok = await saveProgram({ items: updatedItems })
+    if (ok) toast.success("Linha removida!")
+  }
 
   async function handleLeaderSave() {
     setSavingField("leader")
@@ -290,43 +333,76 @@ function SabadoTab() {
         </div>
 
         {/* CULTO */}
-        <div className="hidden md:grid grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px]" style={{ backgroundColor: "#3b5998" }}>
+        <div className="hidden md:grid grid-cols-[40px_80px_80px_1fr_250px_40px] lg:grid-cols-[40px_100px_100px_1fr_300px_40px]" style={{ backgroundColor: "#3b5998" }}>
+          <div></div>
           <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Horário</div>
           <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Tempo</div>
           <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Atividade</div>
           <div className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-white">Responsável</div>
+          <div></div>
         </div>
 
         <div className="flex flex-col">
           {cultoItems.map((item, index) => (
             <div 
               key={item.id || `culto-${index}`} 
-              className="flex flex-col md:grid md:grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px] border-b border-[#c5d0e0] p-3 md:p-0 gap-2 md:gap-0"
+              className="flex flex-col md:grid md:grid-cols-[40px_80px_80px_1fr_250px_40px] lg:grid-cols-[40px_100px_100px_1fr_300px_40px] border-b border-[#c5d0e0] p-3 md:p-0 gap-2 md:gap-0 relative group"
               style={{ backgroundColor: index % 2 === 0 ? "#dce3f0" : "#e8eef6" }}
             >
-              {/* Desktop and Mobile Content */}
-              <div className="flex items-center gap-2 md:hidden">
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#3b5998", color: "white" }}>{item.time}</span>
-                {item.duration && <span className="text-xs text-muted-foreground">{item.duration}</span>}
+              <div className="hidden md:flex items-center justify-center">
+                <button type="button" onClick={() => handleAddRowBelow(item.id!, "Culto")} className="p-1 rounded hover:bg-white/50 text-[#3b5998] transition-colors" title="Adicionar linha abaixo">
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
-              <div className="hidden md:flex px-3 py-2 text-sm font-semibold items-center" style={{ color: "#2c3e6b" }}>{item.time}</div>
-              <div className="hidden md:flex px-3 py-2 text-sm items-center" style={{ color: "#4a5568" }}>{item.duration || ""}</div>
-              
-              <div className="text-sm font-medium md:flex px-0 md:px-3 py-0 md:py-2 items-center" style={{ color: "#2d3748" }}>{item.activity}</div>
+
+              {/* Mobile Content */}
+              <div className="flex items-center justify-between md:hidden">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#3b5998", color: "white" }}>{item.time}</span>
+                  {item.duration && <span className="text-xs text-muted-foreground">{item.duration}</span>}
+                </div>
+                <div className="flex gap-1">
+                  <button type="button" onClick={() => handleAddRowBelow(item.id!, "Culto")} className="p-1.5 rounded-md bg-white/50 text-[#3b5998]">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <button type="button" onClick={() => handleDeleteRow(item.id!)} className="p-1.5 rounded-md bg-white/50 text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="hidden md:flex px-1 md:px-2 py-1 items-center">
+                <EditableCell value={item.time} saving={savingField === `${item.id}-time`} onSave={(v) => handleCellSave(item.id!, "time", v)} placeholder="Horário" type="time" />
+              </div>
+              <div className="hidden md:flex px-1 md:px-2 py-1 items-center">
+                <EditableCell value={item.duration} saving={savingField === `${item.id}-duration`} onSave={(v) => handleCellSave(item.id!, "duration", v)} placeholder="Tempo" type="duration" />
+              </div>
               
               <div className="w-full md:w-auto md:px-2 py-1 flex items-center">
-                <ResponsibleCell item={item} saving={savingField === item.id} onSave={handleResponsibleSave} colorScheme="blue" />
+                <EditableCell value={item.activity} saving={savingField === `${item.id}-activity`} onSave={(v) => handleCellSave(item.id!, "activity", v)} placeholder="Atividade" />
+              </div>
+              
+              <div className="w-full md:w-auto md:px-2 py-1 flex items-center">
+                <ResponsibleCell item={item} saving={savingField === `${item.id}-responsible`} onSave={(id, v) => handleCellSave(id, "responsible", v)} colorScheme="blue" />
+              </div>
+
+              <div className="hidden md:flex items-center justify-center">
+                <button type="button" onClick={() => handleDeleteRow(item.id!)} className="p-1 rounded hover:bg-white/50 text-destructive/70 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100" title="Excluir linha">
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           ))}
         </div>
 
         {/* ESCOLA SABATINA */}
-        <div className="w-full px-3 py-2 text-left text-xs font-bold uppercase tracking-wider mt-4 md:mt-0 md:grid md:grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px] hidden" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>
+        <div className="w-full px-3 py-2 text-left text-xs font-bold uppercase tracking-wider mt-4 md:mt-0 md:grid md:grid-cols-[40px_80px_80px_1fr_250px_40px] lg:grid-cols-[40px_100px_100px_1fr_300px_40px] hidden" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>
+          <div></div>
           <div>Horário</div>
           <div>Tempo</div>
           <div>Escola Sabatina</div>
           <div>Responsável</div>
+          <div></div>
         </div>
         <div className="md:hidden w-full px-3 py-2 text-center text-xs font-bold uppercase tracking-wider mt-4" style={{ backgroundColor: "#5a7a3a", color: "#ffffff" }}>
           ESCOLA SABATINA
@@ -336,20 +412,50 @@ function SabadoTab() {
           {escolaItems.map((item, index) => (
             <div 
               key={item.id || `escola-${index}`} 
-              className="flex flex-col md:grid md:grid-cols-[80px_80px_1fr_250px] lg:grid-cols-[100px_100px_1fr_300px] border-b border-[#b8ccaa] p-3 md:p-0 gap-2 md:gap-0"
+              className="flex flex-col md:grid md:grid-cols-[40px_80px_80px_1fr_250px_40px] lg:grid-cols-[40px_100px_100px_1fr_300px_40px] border-b border-[#b8ccaa] p-3 md:p-0 gap-2 md:gap-0 relative group"
               style={{ backgroundColor: index % 2 === 0 ? "#d6e4c8" : "#e4eeda" }}
             >
-              <div className="flex items-center gap-2 md:hidden">
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#5a7a3a", color: "white" }}>{item.time}</span>
-                {item.duration && <span className="text-xs text-muted-foreground">{item.duration}</span>}
+              <div className="hidden md:flex items-center justify-center">
+                <button type="button" onClick={() => handleAddRowBelow(item.id!, "Escola Sabatina")} className="p-1 rounded hover:bg-white/50 text-[#5a7a3a] transition-colors" title="Adicionar linha abaixo">
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
-              <div className="hidden md:flex px-3 py-2 text-sm font-semibold items-center" style={{ color: "#3a5a2a" }}>{item.time}</div>
-              <div className="hidden md:flex px-3 py-2 text-sm items-center" style={{ color: "#4a5568" }}>{item.duration || "-"}</div>
-              
-              <div className="text-sm font-medium md:flex px-0 md:px-3 py-0 md:py-2 items-center" style={{ color: "#2d3748" }}>{item.activity}</div>
+
+              {/* Mobile Content */}
+              <div className="flex items-center justify-between md:hidden">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#5a7a3a", color: "white" }}>{item.time}</span>
+                  {item.duration && <span className="text-xs text-muted-foreground">{item.duration}</span>}
+                </div>
+                <div className="flex gap-1">
+                  <button type="button" onClick={() => handleAddRowBelow(item.id!, "Escola Sabatina")} className="p-1.5 rounded-md bg-white/50 text-[#5a7a3a]">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <button type="button" onClick={() => handleDeleteRow(item.id!)} className="p-1.5 rounded-md bg-white/50 text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="hidden md:flex px-1 md:px-2 py-1 items-center">
+                <EditableCell value={item.time} saving={savingField === `${item.id}-time`} onSave={(v) => handleCellSave(item.id!, "time", v)} placeholder="Horário" type="time" />
+              </div>
+              <div className="hidden md:flex px-1 md:px-2 py-1 items-center">
+                <EditableCell value={item.duration} saving={savingField === `${item.id}-duration`} onSave={(v) => handleCellSave(item.id!, "duration", v)} placeholder="Tempo" type="duration" />
+              </div>
               
               <div className="w-full md:w-auto md:px-2 py-1 flex items-center">
-                <ResponsibleCell item={item} saving={savingField === item.id} onSave={handleResponsibleSave} colorScheme="green" />
+                <EditableCell value={item.activity} saving={savingField === `${item.id}-activity`} onSave={(v) => handleCellSave(item.id!, "activity", v)} placeholder="Atividade" />
+              </div>
+              
+              <div className="w-full md:w-auto md:px-2 py-1 flex items-center">
+                <ResponsibleCell item={item} saving={savingField === `${item.id}-responsible`} onSave={(id, v) => handleCellSave(id, "responsible", v)} colorScheme="green" />
+              </div>
+
+              <div className="hidden md:flex items-center justify-center">
+                <button type="button" onClick={() => handleDeleteRow(item.id!)} className="p-1 rounded hover:bg-white/50 text-destructive/70 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100" title="Excluir linha">
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
           ))}
@@ -433,6 +539,36 @@ function DomingoTab() {
     [selectedProgram, saveProgram, user],
   )
 
+  async function handleAddRowBelow(itemIndex: number) {
+    if (!selectedProgram) return
+    const items = [...selectedProgram.program_items]
+    const currentItem = items[itemIndex]
+    const nextTime = calcNextTime(currentItem.time || "", currentItem.duration || "")
+    
+    const newItem: ProgramItem = {
+      section: "Domingo",
+      time: nextTime,
+      duration: "",
+      activity: "",
+      responsible: "",
+      sort_order: 0
+    }
+    
+    items.splice(itemIndex + 1, 0, newItem)
+    const reordered = items.map((item, i) => ({ ...item, sort_order: i }))
+    
+    const ok = await saveProgram({ items: reordered })
+    if (ok) toast.success("Linha adicionada!")
+  }
+
+  async function handleDeleteRow(itemIndex: number) {
+    if (!selectedProgram) return
+    if (!window.confirm("Deseja excluir esta linha?")) return
+    const updatedItems = selectedProgram.program_items.filter((_, i) => i !== itemIndex).map((item, i) => ({ ...item, sort_order: i }))
+    const ok = await saveProgram({ items: updatedItems })
+    if (ok) toast.success("Linha removida!")
+  }
+
   async function handleLeaderSave() {
     setSavingField("leader")
     const ok = await saveProgram({ leader: leaderValue })
@@ -506,7 +642,7 @@ function DomingoTab() {
         <table className="w-full border-collapse min-w-[480px]">
           <thead>
             <tr>
-              <th colSpan={4} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: "#5b7fa5", color: "#ffffff" }}>
+              <th colSpan={6} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: "#5b7fa5", color: "#ffffff" }}>
                 <HeaderEditable
                   title="PROGRAMA DOMINGO"
                   date={selectedProgram.program_date}
@@ -529,7 +665,12 @@ function DomingoTab() {
           </thead>
           <tbody>
             {items.map((item, index) => (
-              <tr key={item.id || `dom-${index}`} className="border-b border-[#b8ccdd]" style={{ backgroundColor: index % 2 === 0 ? "#dce8f4" : "#e8f0f8" }}>
+              <tr key={item.id || `dom-${index}`} className="border-b border-[#b8ccdd] group" style={{ backgroundColor: index % 2 === 0 ? "#dce8f4" : "#e8f0f8" }}>
+                <td className="px-1 py-1 text-center">
+                  <button type="button" onClick={() => handleAddRowBelow(index)} className="p-1 rounded hover:bg-white/50 text-[#5b7fa5] transition-colors" title="Adicionar linha abaixo">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </td>
                 <td className="px-1 md:px-2 py-1">
                   <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" type="time" />
                 </td>
@@ -541,6 +682,11 @@ function DomingoTab() {
                 </td>
                 <td className="px-1 md:px-2 py-1">
                   <EditableCell value={item.responsible} saving={savingField === `${index}-responsible`} onSave={(v) => handleCellSave(index, "responsible", v)} placeholder="Responsável" />
+                </td>
+                <td className="px-1 py-1 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button type="button" onClick={() => handleDeleteRow(index)} className="p-1 rounded hover:bg-white/50 text-destructive/70 hover:text-destructive" title="Excluir linha">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -609,6 +755,36 @@ function QuartaTab() {
     },
     [program, saveProgram, user],
   )
+
+  async function handleAddRowBelow(itemIndex: number) {
+    if (!program) return
+    const items = [...(program.program_items || [])]
+    const currentItem = items[itemIndex]
+    const nextTime = calcNextTime(currentItem.time || "", currentItem.duration || "")
+    
+    const newItem: ProgramItem = {
+      section: "Quarta",
+      time: nextTime,
+      duration: "",
+      activity: "",
+      responsible: "",
+      sort_order: 0
+    }
+    
+    items.splice(itemIndex + 1, 0, newItem)
+    const reordered = items.map((item, i) => ({ ...item, sort_order: i }))
+    
+    const ok = await saveProgram({ items: reordered })
+    if (ok) toast.success("Linha adicionada!")
+  }
+
+  async function handleDeleteRow(itemIndex: number) {
+    if (!program) return
+    if (!window.confirm("Deseja excluir esta linha?")) return
+    const updatedItems = (program.program_items || []).filter((_, i) => i !== itemIndex).map((item, i) => ({ ...item, sort_order: i }))
+    const ok = await saveProgram({ items: updatedItems })
+    if (ok) toast.success("Linha removida!")
+  }
 
   async function handleLeaderSave() {
     setSavingField("leader")
@@ -684,7 +860,7 @@ function QuartaTab() {
         <table className="w-full border-collapse" style={{ minWidth: 600 }}>
           <thead>
             <tr>
-              <th colSpan={5} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: quartaColor, color: "#ffffff" }}>
+              <th colSpan={7} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: quartaColor, color: "#ffffff" }}>
                 PROGRAMA DE QUARTA-FEIRA - {editingLeader ? (
                   <span className="inline-flex items-center gap-1">
                     <input value={leaderValue} onChange={(e) => setLeaderValue(e.target.value)} onBlur={handleLeaderSave} onKeyDown={(e) => e.key === "Enter" && handleLeaderSave()} autoFocus className="bg-white/20 border border-white/40 rounded px-2 py-0.5 text-sm w-48 text-white placeholder-white/60 outline-none" placeholder="Dirigentes" />
@@ -698,16 +874,23 @@ function QuartaTab() {
               </th>
             </tr>
             <tr>
+              <th className="w-[40px]" style={{ backgroundColor: quartaColorLight }}></th>
               <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Horário</th>
               <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Tempo</th>
               <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Atividade</th>
               <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[280px]" style={{ backgroundColor: quartaColorLight, color: "#ffffff" }}>Responsável</th>
               <th className="w-[50px]" style={{ backgroundColor: quartaColorLight }}></th>
+              <th className="w-[40px]" style={{ backgroundColor: quartaColorLight }}></th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, index) => (
-              <tr key={item.id || `qua-${index}`} className="border-b border-[#a8ccb8]" style={{ backgroundColor: index % 2 === 0 ? "#d4e8dc" : "#e2f0e8" }}>
+              <tr key={item.id || `qua-${index}`} className="border-b border-[#a8ccb8] group" style={{ backgroundColor: index % 2 === 0 ? "#d4e8dc" : "#e2f0e8" }}>
+                <td className="px-1 py-1 text-center">
+                  <button type="button" onClick={() => handleAddRowBelow(index)} className="p-1 rounded hover:bg-white/50 text-[#3a6b4f] transition-colors" title="Adicionar linha abaixo">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </td>
                 <td className="px-1 md:px-2 py-1">
                   <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" type="time" />
                 </td>
@@ -729,6 +912,11 @@ function QuartaTab() {
                       <ChevronDown className="h-3.5 w-3.5 text-gray-600" />
                     </button>
                   </div>
+                </td>
+                <td className="px-1 py-1 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button type="button" onClick={() => handleDeleteRow(index)} className="p-1 rounded hover:bg-white/50 text-destructive/70 hover:text-destructive" title="Excluir linha">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -903,6 +1091,28 @@ function EspeciaisTab() {
     }
   }
 
+  async function handleAddRowBelow(itemIndex: number) {
+    if (!selectedProgram) return
+    const items = [...(selectedProgram.program_items || [])]
+    const currentItem = items[itemIndex]
+    const nextTime = calcNextTime(currentItem.time || "", currentItem.duration || "")
+    
+    const newItem: ProgramItem = {
+      section: "Especial",
+      time: nextTime,
+      duration: "",
+      activity: "",
+      responsible: "",
+      sort_order: 0
+    }
+    
+    items.splice(itemIndex + 1, 0, newItem)
+    const reordered = items.map((item, i) => ({ ...item, sort_order: i }))
+    
+    const ok = await saveProgram({ items: reordered })
+    if (ok) toast.success("Linha adicionada!")
+  }
+
   function handleNewItemChange(idx: number, field: string, raw: string) {
     const c = [...newItems]
     let value = raw
@@ -916,6 +1126,14 @@ function EspeciaisTab() {
       if (next) c[idx + 1] = { ...c[idx + 1], time: next }
     }
     setNewItems(c)
+  }
+
+  function handleAddNewRowBelow(idx: number) {
+    const c = [...newItems]
+    const current = c[idx]
+    const nextTime = calcNextTime(current.time || "", current.duration || "")
+    c.splice(idx + 1, 0, { section: "Especial", time: nextTime, duration: "", activity: "", responsible: "", sort_order: c.length })
+    setNewItems(c.map((item, i) => ({ ...item, sort_order: i })))
   }
 
   async function handleCreateProgram() {
@@ -1024,11 +1242,12 @@ function EspeciaisTab() {
             <table className="w-full border-collapse" style={{ minWidth: 600 }}>
               <thead>
                 <tr>
-                  <th colSpan={6} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: specialColor, color: "#ffffff" }}>
+                  <th colSpan={7} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: specialColor, color: "#ffffff" }}>
                     {newTitle || "PROGRAMA ESPECIAL"}{newDate ? ` - ${formatDate(newDate)}` : ""}{newLeader ? ` - ${newLeader}` : ""}
                   </th>
                 </tr>
                 <tr>
+                  <th className="w-[40px]" style={{ backgroundColor: specialColorLight }}></th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Horário</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Tempo</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Atividade</th>
@@ -1038,7 +1257,12 @@ function EspeciaisTab() {
               </thead>
               <tbody>
                 {newItems.map((item, idx) => (
-                  <tr key={idx} className="border-b border-[#c4b8d4]" style={{ backgroundColor: idx % 2 === 0 ? "#e8dff0" : "#f0eaf6" }}>
+                  <tr key={idx} className="border-b border-[#c4b8d4] group" style={{ backgroundColor: idx % 2 === 0 ? "#e8dff0" : "#f0eaf6" }}>
+                    <td className="px-1 py-1 text-center">
+                      <button type="button" onClick={() => handleAddNewRowBelow(idx)} className="p-1 rounded hover:bg-white/50 text-[#6b4f8a] transition-colors" title="Adicionar linha abaixo">
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </td>
                     <td className="px-1 md:px-2 py-1">
                       <input type="text" value={item.time} onChange={(e) => handleNewItemChange(idx, "time", e.target.value)} placeholder="19:00" className="w-full text-xs md:text-sm py-1.5 px-2 rounded border border-dashed border-gray-300 bg-white/40 text-left outline-none focus:ring-1 focus:ring-purple-400" />
                     </td>
@@ -1103,7 +1327,7 @@ function EspeciaisTab() {
             <table className="w-full border-collapse" style={{ minWidth: 600 }}>
               <thead>
                 <tr>
-                  <th colSpan={6} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: specialColor, color: "#ffffff" }}>
+                  <th colSpan={7} className="px-3 py-3 text-center text-sm md:text-base font-bold uppercase tracking-wide" style={{ backgroundColor: specialColor, color: "#ffffff" }}>
                     {editingTitle ? (
                       <span className="inline-flex items-center gap-1">
                         <input value={titleValue} onChange={(e) => setTitleValue(e.target.value)} onBlur={handleTitleSave} onKeyDown={(e) => e.key === "Enter" && handleTitleSave()} autoFocus className="bg-white/20 border border-white/40 rounded px-2 py-0.5 text-sm w-40 text-white placeholder-white/60 outline-none" />
@@ -1139,6 +1363,7 @@ function EspeciaisTab() {
                   </th>
                 </tr>
                 <tr>
+                  <th className="w-[40px]" style={{ backgroundColor: specialColorLight }}></th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Horário</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Tempo</th>
                   <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: specialColorLight, color: "#ffffff" }}>Atividade</th>
@@ -1149,7 +1374,12 @@ function EspeciaisTab() {
               </thead>
               <tbody>
                 {(selectedProgram.program_items || []).map((item, index) => (
-                  <tr key={item.id || `esp-${index}`} className="border-b border-[#c4b8d4]" style={{ backgroundColor: index % 2 === 0 ? "#e8dff0" : "#f0eaf6" }}>
+                  <tr key={item.id || `esp-${index}`} className="border-b border-[#c4b8d4] group" style={{ backgroundColor: index % 2 === 0 ? "#e8dff0" : "#f0eaf6" }}>
+                    <td className="px-1 py-1 text-center">
+                      <button type="button" onClick={() => handleAddRowBelow(index)} className="p-1 rounded hover:bg-white/50 text-[#6b4f8a] transition-colors" title="Adicionar linha abaixo">
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </td>
                     <td className="px-1 md:px-2 py-1">
                       <EditableCell value={item.time} saving={savingField === `${index}-time`} onSave={(v) => handleCellSave(index, "time", v)} placeholder="Horário" type="time" />
                     </td>
@@ -1251,10 +1481,12 @@ function ProgramSelector({ programs, selectedId, onSelect }: { programs: Program
 function ColumnHeaders({ color }: { color: string }) {
   return (
     <tr>
+      <th className="w-[40px]" style={{ backgroundColor: color }}></th>
       <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: color, color: "#ffffff" }}>Horário</th>
       <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[80px] md:w-[100px]" style={{ backgroundColor: color, color: "#ffffff" }}>Tempo</th>
       <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: color, color: "#ffffff" }}>Atividade</th>
       <th className="px-2 md:px-3 py-2 text-left text-[11px] md:text-xs font-bold uppercase tracking-wider w-[140px] md:w-[300px]" style={{ backgroundColor: color, color: "#ffffff" }}>Responsável</th>
+      <th className="w-[40px]" style={{ backgroundColor: color }}></th>
     </tr>
   )
 }
