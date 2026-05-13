@@ -257,14 +257,16 @@ function SabadoTab() {
 
   async function handleClearAll() {
     if (!selectedProgram) return
-    if (!window.confirm("Limpar todos os campos de responsáveis?")) return
+    if (!window.confirm("Limpar campos de responsáveis, dirigentes e data? (horário, tempo e atividade NÃO serão afetados)")) return
     setClearing(true)
     const clearedItems = selectedProgram.program_items.map((item) => ({ ...item, responsible: "" }))
-    const ok = await saveProgram({ items: clearedItems })
+    const ok = await saveProgram({ items: clearedItems, leader: "", program_date: "" })
     setClearing(false)
     if (ok) {
+      setLeaderValue("")
+      setDateValue("")
       toast.success("Campos limpos!")
-      if (user) logHistory(selectedProgram.id, "sabado", user.name, "cleared", `limpou todos os campos de responsáveis`)
+      if (user) logHistory(selectedProgram.id, "sabado", user.name, "cleared", `limpou todos os campos de responsáveis, dirigentes e data`)
     }
   }
 
@@ -593,14 +595,16 @@ function DomingoTab() {
 
   async function handleClearAll() {
     if (!selectedProgram) return
-    if (!window.confirm("Limpar todos os campos de responsáveis? (horário, tempo e atividade NÃO serão afetados)")) return
+    if (!window.confirm("Limpar campos de responsáveis, dirigentes e data? (horário, tempo e atividade NÃO serão afetados)")) return
     setClearing(true)
     const clearedItems = selectedProgram.program_items.map((item) => ({ ...item, responsible: "" }))
-    const ok = await saveProgram({ items: clearedItems })
+    const ok = await saveProgram({ items: clearedItems, leader: "", program_date: "" })
     setClearing(false)
     if (ok) {
+      setLeaderValue("")
+      setDateValue("")
       toast.success("Campos limpos!")
-      if (user) logHistory(selectedProgram.id, "domingo", user.name, "cleared", `limpou todos os campos de responsáveis`)
+      if (user) logHistory(selectedProgram.id, "domingo", user.name, "cleared", `limpou todos os campos de responsáveis, dirigentes e data`)
     }
   }
 
@@ -799,14 +803,15 @@ function QuartaTab() {
 
   async function handleClearAll() {
     if (!program) return
-    if (!window.confirm("Limpar todos os campos de responsáveis? (horário, tempo e atividade NÃO serão afetados)")) return
+    if (!window.confirm("Limpar campos de responsáveis, dirigentes e data? (horário, tempo e atividade NÃO serão afetados)")) return
     setClearing(true)
     const clearedItems = (program.program_items || []).map((item) => ({ ...item, responsible: "" }))
-    const ok = await saveProgram({ items: clearedItems })
+    const ok = await saveProgram({ items: clearedItems, leader: "", program_date: "" })
     setClearing(false)
     if (ok) {
+      setLeaderValue("")
       toast.success("Campos limpos!")
-      if (user) logHistory(program.id, "quarta", user.name, "cleared", `limpou todos os campos de responsáveis`)
+      if (user) logHistory(program.id, "quarta", user.name, "cleared", `limpou todos os campos de responsáveis, dirigentes e data`)
     }
   }
 
@@ -1049,14 +1054,16 @@ function EspeciaisTab() {
 
   async function handleClearAll() {
     if (!selectedProgram) return
-    if (!window.confirm("Limpar todos os campos de responsáveis?")) return
+    if (!window.confirm("Limpar campos de responsáveis, dirigentes e data? (horário, tempo e atividade NÃO serão afetados)")) return
     setClearing(true)
     const clearedItems = (selectedProgram.program_items || []).map((item) => ({ ...item, responsible: "" }))
-    const ok = await saveProgram({ items: clearedItems })
+    const ok = await saveProgram({ items: clearedItems, leader: "", program_date: "" })
     setClearing(false)
     if (ok) {
+      setLeaderValue("")
+      setDateValue("")
       toast.success("Campos limpos!")
-      if (user) logHistory(selectedProgram.id, "especiais", user.name, "cleared", `limpou todos os campos de responsáveis`)
+      if (user) logHistory(selectedProgram.id, "especiais", user.name, "cleared", `limpou todos os campos de responsáveis, dirigentes e data`)
     }
   }
 
